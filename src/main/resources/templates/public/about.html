@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>About Me</title>
+    <!-- Prevenir flash de luz branca ao carregar no modo escuro -->
+    <script>
+        // Verificar preferência de tema e aplicar imediatamente
+        (function() {
+            const darkMode = localStorage.getItem('darkMode') === 'true';
+            if (darkMode) {
+                document.documentElement.classList.add('dark-mode-preload');
+            }
+        })();
+    </script>
+    <link rel="stylesheet" th:href="@{/css/dark-theme.css}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script th:src="@{/js/theme-switcher.js}"></script>
+    <style>
+        /* Prevenir flash durante carregamento */
+        html.dark-mode-preload,
+        html.dark-mode-preload body {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            transition: none !important;
+        }
+
+        /* Ocultar conteúdo até CSS ser carregado para evitar flash */
+        .transition-preload {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        html.transition-ready .transition-preload {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="transition-preload">
+    <header>
+        <nav>
+            <a th:href="@{/}">Home</a>
+            <a th:href="@{/about}">About Me</a>
+            <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+                <i id="theme-icon" class="fas fa-moon"></i>
+            </button>
+            <a th:href="@{/login}" class="login-btn">Login</a>
+        </nav>
+    </header>
+    <main>
+        <div class="about-section">
+            <img th:if="${author.profilePhotoUrl}" th:src="${author.profilePhotoUrl}" class="profile-img" alt="Profile Photo"/>
+            <h2 th:text="${author.fullName}">Author Name</h2>
+            <p th:if="${author.bio}" class="author-bio" th:text="${author.bio}">Short bio</p>
+            <div class="about-content" th:utext="${author.aboutMe}">
+                <!-- Rich text content will be rendered here -->
+            </div>
+        </div>
+    </main>
+</body>
+</html> 

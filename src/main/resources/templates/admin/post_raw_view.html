@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raw Post Content</title>
+    <link rel="stylesheet" th:href="@{/css/dark-theme.css}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        pre {
+            background-color: #f5f5f5;
+            color: #333;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-width: 100%;
+            margin: 20px 0;
+        }
+        
+        .dark-mode pre {
+            background-color: #282c34;
+            color: #abb2bf;
+        }
+        
+        .post-details {
+            margin-bottom: 30px;
+        }
+        
+        .post-details div {
+            margin-bottom: 10px;
+        }
+        
+        .property-name {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .back-button {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <a th:href="@{/admin/dashboard}" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+            <a th:href="@{/admin/dashboard}">Dashboard</a>
+            <h1>Raw Post Content View</h1>
+        </nav>
+    </header>
+    
+    <main>
+        <div class="back-button">
+            <a th:href="@{/admin/dashboard}" class="btn cancel-btn">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+        
+        <div class="post-details">
+            <div>
+                <span class="property-name">Title:</span>
+                <span th:text="${post.title}">Title</span>
+            </div>
+            
+            <div>
+                <span class="property-name">Slug:</span>
+                <span th:text="${post.slug}">Slug</span>
+            </div>
+            
+            <div>
+                <span class="property-name">Created:</span>
+                <span th:text="${post.createdAt != null ? #temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm:ss') : 'N/A'}">Created Date</span>
+            </div>
+            
+            <div>
+                <span class="property-name">Published:</span>
+                <span th:text="${post.publishedAt != null ? #temporals.format(post.publishedAt, 'yyyy-MM-dd HH:mm:ss') : 'Not published'}">Published Date</span>
+            </div>
+            
+            <div>
+                <span class="property-name">Status:</span>
+                <span th:text="${post.published ? 'Published' : 'Draft'}">Status</span>
+            </div>
+        </div>
+        
+        <h2>HTML Content (rendered safely as text):</h2>
+        <pre th:text="${post.content != null ? post.content : 'No content'}">Content goes here</pre>
+        
+        <div class="post-actions">
+            <a th:href="@{'/admin/posts/edit/' + ${post.id}}" class="btn edit-btn">
+                <i class="fas fa-edit"></i> Edit Post
+            </a>
+            
+            <a th:href="@{'/posts/' + ${post.slug}}" class="btn save-btn" th:if="${post.published}">
+                <i class="fas fa-eye"></i> View Post
+            </a>
+        </div>
+    </main>
+</body>
+</html> 

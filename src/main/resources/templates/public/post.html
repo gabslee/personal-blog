@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${post != null ? post.title : 'Post'}">Post</title>
+    <!-- Prevenir flash de luz branca ao carregar no modo escuro -->
+    <script>
+        // Verificar preferência de tema e aplicar imediatamente
+        (function() {
+            const darkMode = localStorage.getItem('darkMode') === 'true';
+            if (darkMode) {
+                document.documentElement.classList.add('dark-mode-preload');
+            }
+        })();
+    </script>
+    <link rel="stylesheet" th:href="@{/css/dark-theme.css}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script th:src="@{/js/theme-switcher.js}"></script>
+    <style>
+        /* Prevenir flash durante carregamento */
+        html.dark-mode-preload,
+        html.dark-mode-preload body {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            transition: none !important;
+        }
+
+        /* Ocultar conteúdo até CSS ser carregado para evitar flash */
+        .transition-preload {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        html.transition-ready .transition-preload {
+            opacity: 1;
+        }
+        
+        /* Garantir conteúdo responsivo */
+        main {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        
+        .post-full {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        /* Improve cover image styling */
+        .cover-container {
+            margin-bottom: 2rem;
+            width: 100%;
+            max-height: 500px;
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .cover-img {
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+        
+        .cover-container:hover .cover-img {
+            transform: scale(1.02);
+        }
+        
+        /* Post title and meta styling */
+        .post-header {
+            margin-bottom: 2rem;
+        }
+        
+        .post-header h1 {
+            margin-bottom: 0.5rem;
+        }
+        
+        .post-meta {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Ensure media content is responsive */
+        .post-content img,
+        .post-content video,
+        .post-content iframe {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        /* Embedded content responsive container */
+        .media-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 ratio */
+            height: 0;
+            overflow: hidden;
+            margin: 1.5rem 0;
+            border-radius: 8px;
+        }
+
+        .media-container iframe,
+        .media-container object,
+        .media-container embed {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body class="transition-preload">
+    <header>
+        <nav>
+            <a th:href="@{/}" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+            <a th:href="@{/}">Home</a>
+            <a th:href="@{/about}">About Me</a>
+            <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+                <i id="theme-icon" class="fas fa-moon"></i>
+            </button>
+            <a th:href="@{/login}" class="login-btn">Login</a>
+        </nav>
+    </header>
+    <main>
+        <article class="post-full" th:if="${post != null}">
+            <!-- Cover image now appears above the title -->
+            <div class="cover-container" th:if="${post.coverImageUrl != null && !post.coverImageUrl.isEmpty()}">
+                <img th:src="${post.coverImageUrl}" class="cover-img" alt="Cover"/>
+            </div>
+            
+            <div class="post-header">
+                <h1 th:text="${post.title != null ? post.title : 'Untitled'}">Post Title</h1>
+                <div class="post-meta">
+                    <span th:text="${post.publishedAt != null ? #temporals.format(post.publishedAt, 'MMMM dd, yyyy') : (post.createdAt != null ? #temporals.format(post.createdAt, 'MMMM dd, yyyy') : 'No date')}">Date</span>
+                </div>
+            </div>
+            
+            <div class="post-content-wrapper">
+                <!-- Use th:with to store content safely in a variable to prevent parsing issues -->
+                <div class="post-content" th:with="safeContent=${post.content != null ? post.content : ''}" th:utext="${safeContent}">Post content goes here</div>
+            </div>
+            
+            <div class="share-section">
+                <button class="share-btn" onclick="copyToClipboard()" title="Share this post">
+                    <i class="fas fa-share-alt"></i> Share
+                </button>
+                <input type="text" id="share-url" th:value="${baseUrl + '/posts/' + post.slug}" style="position: absolute; left: -9999px;">
+            </div>
+        </article>
+    </main>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Make all iframes responsive by wrapping them in a container
+            wrapIframes();
+            
+            // Apply dark mode based on localStorage
+            applyTheme();
+        });
+        
+        function wrapIframes() {
+            const iframes = document.querySelectorAll('.post-content iframe');
+            iframes.forEach(function(iframe) {
+                // Verify the iframe is not already wrapped
+                if (iframe.parentNode.classList.contains('media-container')) {
+                    return;
+                }
+                
+                // Create container and wrap the iframe
+                const container = document.createElement('div');
+                container.className = 'media-container';
+                iframe.parentNode.insertBefore(container, iframe);
+                container.appendChild(iframe);
+            });
+        }
+        
+        function applyTheme() {
+            const isDarkMode = localStorage.getItem('darkMode') === 'true';
+            if (isDarkMode) {
+                document.documentElement.classList.add('dark-mode');
+                document.body.classList.add('dark-mode');
+                
+                const themeIcon = document.getElementById('theme-icon');
+                if (themeIcon) {
+                    themeIcon.classList.remove('fa-moon');
+                    themeIcon.classList.add('fa-sun');
+                }
+            }
+        }
+        
+        function copyToClipboard() {
+            const input = document.getElementById('share-url');
+            if (!input) return;
+            
+            input.select();
+            document.execCommand('copy');
+            
+            // Show feedback
+            const shareBtn = document.querySelector('.share-btn');
+            if (!shareBtn) return;
+            
+            const originalHTML = shareBtn.innerHTML;
+            shareBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            
+            setTimeout(() => {
+                shareBtn.innerHTML = originalHTML;
+            }, 2000);
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <meta name="app-context" th:content="@{/}" />
+    <!-- Prevenir flash de luz branca ao carregar no modo escuro -->
+    <script>
+        // Verificar preferência de tema e aplicar imediatamente
+        (function() {
+            const darkMode = localStorage.getItem('darkMode') === 'true';
+            if (darkMode) {
+                document.documentElement.classList.add('dark-mode-preload');
+            }
+        })();
+    </script>
+    <link rel="stylesheet" th:href="@{/css/dark-theme.css}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script th:src="@{/js/theme-switcher.js}"></script>
+    <style>
+        /* Prevenir flash durante carregamento */
+        html.dark-mode-preload,
+        html.dark-mode-preload body {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            transition: none !important;
+        }
+
+        /* Ocultar conteúdo até CSS ser carregado para evitar flash */
+        .transition-preload {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        html.transition-ready .transition-preload {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="transition-preload" th:data-context-path="@{/}">
+    <header>
+        <h1>Admin Dashboard</h1>
+        <nav>
+            <a th:href="@{/admin/posts/new}" class="new-post-btn"><i class="fas fa-plus"></i> New Post</a>
+            <a th:href="@{/admin/about/edit}"><i class="fas fa-user-edit"></i> Edit About Me</a>
+            <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+                <i id="theme-icon" class="fas fa-moon"></i>
+            </button>
+            <a th:href="@{/logout}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+    </header>
+    <main>
+        <!-- Mensagens de sucesso/erro -->
+        <div th:if="${successMessage}" class="alert alert-success">
+            <i class="fas fa-check-circle"></i> <span th:text="${successMessage}"></span>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-error">
+            <i class="fas fa-exclamation-circle"></i> <span th:text="${errorMessage}"></span>
+        </div>
+        
+        <section class="posts-management">
+            <h2><i class="fas fa-list"></i> Your Posts</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cover</th>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Published Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="post : ${posts.content}">
+                        <td>
+                            <img th:if="${post.coverImageUrl}" th:src="${post.coverImageUrl}" class="cover-thumb" alt="Cover"/>
+                            <div th:if="${post.coverImageUrl == null}" class="no-cover-placeholder">
+                                <i class="fas fa-image"></i>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="post-title" th:text="${post.title}"></div>
+                            <div class="post-date" th:text="${'Created: ' + #temporals.format(post.createdAt, 'MMM dd, yyyy')}"></div>
+                        </td>
+                        <td>
+                            <span th:if="${post.published}" class="status-badge status-published">
+                                <i class="fas fa-globe"></i> Published
+                            </span>
+                            <span th:unless="${post.published}" class="status-badge status-draft">
+                                <i class="fas fa-edit"></i> Draft
+                            </span>
+                        </td>
+                        <td>
+                            <span th:if="${post.publishedAt != null}" th:text="${#temporals.format(post.publishedAt, 'MMM dd, yyyy HH:mm')}"></span>
+                            <span th:if="${post.publishedAt == null}" class="not-published">Not yet published</span>
+                        </td>
+                        <td class="actions-cell">
+                            <a th:href="@{'/admin/posts/edit/' + ${post.id}}" class="action-btn edit-btn">
+                                <i class="fas fa-pen"></i> Edit
+                            </a>
+                            <a th:if="${post.published}" th:href="@{'/posts/' + ${post.slug}}" target="_blank" class="action-btn view-btn">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                            <span th:unless="${post.published}" class="action-btn disabled-btn">
+                                <i class="fas fa-eye-slash"></i> Preview
+                            </span>
+                            <a th:href="@{'/admin/posts/view-raw/' + ${post.id}}" class="action-btn edit-btn">
+                                <i class="fas fa-code"></i> Debug
+                            </a>
+                            <button 
+                                th:data-post-id="${post.id}" 
+                                th:data-post-title="${post.title}"
+                                class="action-btn delete-btn delete-post-btn">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </td>
+                    </tr>
+                    <tr th:if="${posts.content.empty}">
+                        <td colspan="5" class="no-posts">
+                            <div class="empty-state">
+                                <i class="fas fa-file-alt empty-icon"></i>
+                                <p>No posts found. Create your first post!</p>
+                                <a th:href="@{/admin/posts/new}" class="btn">Create Post</a>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="pagination">
+                <a th:if="${posts.hasPrevious()}" th:href="@{/admin/dashboard(page=${posts.number - 1})}" class="page-btn">
+                    <i class="fas fa-chevron-left"></i> Previous
+                </a>
+                <span class="page-info">
+                    <span th:text="${posts.number + 1}"></span> / <span th:text="${posts.totalPages}"></span>
+                </span>
+                <a th:if="${posts.hasNext()}" th:href="@{/admin/dashboard(page=${posts.number + 1})}" class="page-btn">
+                    Next <i class="fas fa-chevron-right"></i>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal de confirmação de exclusão -->
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirm Deletion</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the post "<span id="postTitleToDelete"></span>"?</p>
+                <p class="warning-text">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <form id="deletePostForm" method="post" th:action="@{/admin/posts/delete}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <input type="hidden" id="postIdInput" name="postId" value="" />
+                    <button type="button" class="btn cancel-modal-btn">Cancel</button>
+                    <button type="submit" class="btn delete-confirm-btn">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script para gerenciar o modal de confirmação -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('deleteConfirmModal');
+            const deleteBtns = document.querySelectorAll('.delete-post-btn');
+            const closeModal = document.querySelector('.close-modal');
+            const cancelBtn = document.querySelector('.cancel-modal-btn');
+            const deleteForm = document.getElementById('deletePostForm');
+            const postTitleSpan = document.getElementById('postTitleToDelete');
+            const postIdInput = document.getElementById('postIdInput');
+            
+            // Obter o contexto da aplicação
+            const contextPath = document.body.getAttribute('data-context-path') || '';
+            // Remover a barra final se presente para evitar dupla barra
+            const cleanContextPath = contextPath.endsWith('/') ? contextPath.slice(0, -1) : contextPath;
+            
+            // Abrir modal ao clicar no botão de exclusão
+            deleteBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const postId = this.getAttribute('data-post-id');
+                    const postTitle = this.getAttribute('data-post-title');
+                    
+                    // Definir apenas o ID no campo oculto
+                    postIdInput.value = postId;
+                    postTitleSpan.textContent = postTitle;
+                    
+                    // Mostrar modal
+                    modal.style.display = 'flex';
+                });
+            });
+            
+            // Fechar modal
+            function closeModalFn() {
+                modal.style.display = 'none';
+            }
+            
+            closeModal.addEventListener('click', closeModalFn);
+            cancelBtn.addEventListener('click', closeModalFn);
+            
+            // Fechar modal ao clicar fora dele
+            window.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    closeModalFn();
+                }
+            });
+        });
+    </script>
+</body>
+</html> 
