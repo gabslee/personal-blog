@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${post.id != null ? 'Edit Post' : 'New Post'}">Post Form</title>
+    <!-- CSRF tokens para uploads -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <meta name="_csrf_parameter" th:content="${_csrf.parameterName}"/>
+    <!-- Prevenir flash de luz branca ao carregar no modo escuro -->
+    <script>
+        // Verificar preferência de tema e aplicar imediatamente
+        (function() {
+            const darkMode = localStorage.getItem('darkMode') === 'true';
+            if (darkMode) {
+                document.documentElement.classList.add('dark-mode-preload');
+            }
+        })();
+    </script>
+    <link rel="stylesheet" th:href="@{/css/dark-theme.css}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script th:src="@{'https://cdn.tiny.cloud/1/' + ${@environment.getProperty('tinymce.api.key')} + '/tinymce/6/tinymce.min.js'}" referrerpolicy="origin"></script>
+    <script th:src="@{/js/editor.js}"></script>
+    <script th:src="@{/js/theme-switcher.js}"></script>
+    <style>
+        /* Prevenir flash durante carregamento */
+        html.dark-mode-preload,
+        html.dark-mode-preload body {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            transition: none !important;
+        }
+
+        /* Ocultar conteúdo até CSS ser carregado para evitar flash */
+        .transition-preload {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        html.transition-ready .transition-preload {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="transition-preload">
+    <header>
+        <h1 th:text="${post.id != null ? 'Edit Post' : 'New Post'}"></h1>
+        <nav>
+            <a th:href="@{/admin/dashboard}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+                <i id="theme-icon" class="fas fa-moon"></i>
+            </button>
+            <a th:href="@{/logout}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+    </header>
+    <main>
+        <div class="form-container">
+            <div class="form-header">
+                <h2><i class="fas fa-edit"></i> <span th:text="${post.id != null ? 'Edit Post' : 'Create New Post'}"></span></h2>
+                <p>Fill in the details below to publish your post.</p>
+            </div>
+            
+            <form th:action="@{${post.id != null} ? '/admin/posts/update/' + ${post.id} : '/admin/posts'}" 
+                  method="post" 
+                  enctype="multipart/form-data" 
+                  th:object="${post}"
+                  class="editor-form">
+                
+                <div class="form-group">
+                    <label for="title"><i class="fas fa-heading"></i> Title</label>
+                    <input type="text" id="title" th:field="*{title}" required placeholder="Enter post title"/>
+                </div>
+
+                <div class="form-group profile-photo-group">
+                    <label for="coverImage"><i class="fas fa-image"></i> Cover Image</label>
+                    <div class="profile-photo-container">
+                        <img th:if="${post.coverImageUrl}" th:src="${post.coverImageUrl}" class="current-cover" alt="Current Cover"/>
+                        <div class="profile-upload">
+                            <input type="file" id="coverImage" name="coverImage" accept="image/*"/>
+                            <div class="upload-hint">Drag &amp; drop an image or click to browse</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="content"><i class="fas fa-file-alt"></i> Content</label>
+                    <div class="editor-container">
+                        <textarea id="content" th:field="*{content}" class="rich-editor"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group publish-group">
+                    <label for="published" class="publish-label">
+                        <input type="checkbox" id="published" th:field="*{published}"/>
+                        <div class="publish-wrapper">
+                            <span class="publish-text"><i class="fas fa-globe"></i> Publish this post</span>
+                            <span class="publish-hint">When checked, this post will be visible to the public</span>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="save-btn"><i class="fas fa-save"></i> Save Post</button>
+                    <a th:href="@{/admin/dashboard}" class="cancel-btn"><i class="fas fa-times"></i> Cancel</a>
+                </div>
+            </form>
+        </div>
+    </main>
+</body>
+</html> 

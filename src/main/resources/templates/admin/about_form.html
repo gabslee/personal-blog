@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit About Me</title>
+    <!-- Prevenir flash de luz branca ao carregar no modo escuro -->
+    <script>
+        // Verificar preferência de tema e aplicar imediatamente
+        (function() {
+            const darkMode = localStorage.getItem('darkMode') === 'true';
+            if (darkMode) {
+                document.documentElement.classList.add('dark-mode-preload');
+            }
+        })();
+    </script>
+    <link rel="stylesheet" th:href="@{/css/dark-theme.css}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script th:src="@{'https://cdn.tiny.cloud/1/' + ${@environment.getProperty('tinymce.api.key')} + '/tinymce/6/tinymce.min.js'}" referrerpolicy="origin"></script>
+    <script th:src="@{/js/editor.js}"></script>
+    <script th:src="@{/js/theme-switcher.js}"></script>
+    <style>
+        /* Prevenir flash durante carregamento */
+        html.dark-mode-preload,
+        html.dark-mode-preload body {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            transition: none !important;
+        }
+
+        /* Ocultar conteúdo até CSS ser carregado para evitar flash */
+        .transition-preload {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        html.transition-ready .transition-preload {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="transition-preload">
+    <header>
+        <h1>Edit About Me</h1>
+        <nav>
+            <a th:href="@{/admin/dashboard}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+                <i id="theme-icon" class="fas fa-moon"></i>
+            </button>
+            <a th:href="@{/logout}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+    </header>
+    <main>
+        <div th:if="${errorMessage}" class="alert alert-error">
+            <i class="fas fa-exclamation-circle"></i> <span th:text="${errorMessage}"></span>
+        </div>
+        
+        <div class="form-container">
+            <div class="form-header">
+                <h2><i class="fas fa-user-edit"></i> Edit About Me</h2>
+                <p>Customize your public profile page with your information and bio.</p>
+            </div>
+            
+            <form th:action="@{/admin/about/update}" 
+                  method="post" 
+                  enctype="multipart/form-data" 
+                  th:object="${user}"
+                  class="editor-form">
+                
+                <input type="hidden" th:field="*{id}" />
+                
+                <div class="form-group">
+                    <label for="fullName"><i class="fas fa-user"></i> Full Name</label>
+                    <input type="text" id="fullName" th:field="*{fullName}" required />
+                </div>
+
+                <div class="form-group profile-photo-group">
+                    <label for="profilePhoto"><i class="fas fa-camera"></i> Profile Photo</label>
+                    <div class="profile-photo-container">
+                        <img th:if="${user.profilePhotoUrl}" th:src="${user.profilePhotoUrl}" class="current-profile" alt="Current Profile"/>
+                        <div th:if="${user.profilePhotoUrl == null}" class="current-profile no-photo">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="profile-upload">
+                            <input type="file" id="profilePhoto" name="profilePhoto" accept="image/*"/>
+                            <div class="upload-hint">Drag &amp; drop an image or click to browse</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="bio"><i class="fas fa-comment"></i> Short Bio</label>
+                    <textarea id="bio" th:field="*{bio}" rows="3" placeholder="Write a brief intro about yourself (appears below your name)"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="aboutMe"><i class="fas fa-file-alt"></i> About Me</label>
+                    <div class="editor-container custom-tinymce-container">
+                        <textarea id="aboutMe" th:field="*{aboutMe}" class="rich-editor"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="save-btn"><i class="fas fa-save"></i> Save Changes</button>
+                    <a th:href="@{/admin/dashboard}" class="cancel-btn"><i class="fas fa-times"></i> Cancel</a>
+                </div>
+            </form>
+        </div>
+    </main>
+</body>
+</html> 
